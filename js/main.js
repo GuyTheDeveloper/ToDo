@@ -1,41 +1,59 @@
+import mainArr from "./../api/task.js";
+// console.log(mainArr);
+import * as library from "./helpers/library.js";
+
+let database = window.localStorage;
+let data = JSON.parse(database.getItem("todos"))
+  ? JSON.parse(database.getItem("todos"))
+  : mainArr;
+
 let todoText = document.querySelector(".text-todo");
 let todoMaker = document.querySelector(".btn-add");
 let mainList = document.querySelector(".list-group");
-let listSecond = document.querySelector(".list-group-item");
 
 todoMaker.addEventListener("click", () => {
-  let LIST = document.createElement("li");
-  LIST.className = "list-group-item d-flex align-items-center";
+  if (todoText.value.trim().length < 3) {
+    alert("U may write a task not a code!");
+    return;
+  } else if (todoText.value.trim() === "") {
+    alert("dont be lazy, write a task");
+    return;
+  }
 
-  let INPUT = document.createElement("input");
-  INPUT.className = "form-check-input me-3";
-  INPUT.type = "checkbox";
-  LIST.append(INPUT);
+  let newObj = library.objCreator(todoText.value);
+  data.push(newObj);
 
-  let TEXT = document.createElement("div");
-  TEXT.className = "text w-100";
-  TEXT.textContent = todoText.value;
-  LIST.append(TEXT);
+  database.setItem("todos", JSON.stringify(data));
 
-  let BTN_WRAPPER = document.createElement("div");
-  BTN_WRAPPER.className = "d-flex gap-1";
+  let newNode = library.creator(newObj.id, newObj.text, newObj.text);
 
-  let BTN_EDIT = document.createElement("button");
-  BTN_EDIT.className = "btn btn-warning";
-  BTN_EDIT.textContent = "Edit";
-  BTN_WRAPPER.append(BTN_EDIT);
-
-  let BTN_DELETE = document.createElement("button");
-  BTN_DELETE.className = "btn btn-danger";
-  BTN_DELETE.textContent = "Delete";
-  BTN_WRAPPER.append(BTN_DELETE);
-
-  LIST.append(BTN_WRAPPER);
-  mainList.append(LIST);
-
+  mainList.prepend(newNode);
   todoText.value = "";
+});
 
-  BTN_DELETE.addEventListener("click", () => {
-    LIST.remove();
-  });
+data.forEach((todo) => {
+  let newNode = library.creator(todo.id, todo.text, todo.isDone);
+  mainList.prepend(newNode);
+});
+
+mainList.addEventListener("click", (event) => {
+  let clickedNode = event.target;
+  console.log(clickedNode);
+
+  if (!mainList.contains(clickedNode)) return;
+
+  if (!clickedNode.closest("[data-type]")) return;
+
+  switch (clickedNode.dataset.type) {
+    case "delete":
+      let deleted = clickedNode.parentNode.parentNode;
+      console.log(deleted);
+      data = data.filter((todo) => {
+        return todo.id != deleted.dataset.id;
+      });
+
+      database.setItem("todos", JSON.stringify(data));
+      deleted.remove();
+      break;
+  }
 });
